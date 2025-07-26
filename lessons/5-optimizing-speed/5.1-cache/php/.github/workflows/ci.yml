@@ -8,23 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
+
+      - uses: actions/cache@v1
+        with:
+          path: ~/.composer
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        working-directory: ./lessons/4-testing-infrastructure/4.2-installing-dependencies-by-docker
         run: make composer-install
 
       - name: Start all the environment
-        working-directory: ./lessons/4-testing-infrastructure/4.2-installing-dependencies-by-docker
         run: make start
 
       - name: Wait for the environment to get up
         run: |
-          while ! make ping-mysql; do
+          while ! docker exec codelytv-php_ddd_skeleton-mooc-mysql mysqladmin --user=root --password= --host "127.0.0.1" ping --silent &> /dev/null ; do
               echo "Waiting for database connection..."
               sleep 2
           done
 
       - name: Run the tests
-        working-directory: ./lessons/4-testing-infrastructure/4.2-installing-dependencies-by-docker
         run: make test
